@@ -3,9 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import requests
 import base64
+import os
 
-api_key = 'change_when_presenting'
-
+API_KEY = os.getenv("API_KEY")
 
 def get_portfolio_data(params):
     api_url = "" # TO BE ADDED WHEN THE FINAL API IS DONE!
@@ -15,7 +15,7 @@ def get_portfolio_data(params):
 def fetch_stock_data(symbol):
     base_url = 'https://www.alphavantage.co/query?'
     function = 'TIME_SERIES_DAILY_ADJUSTED'
-    url = f"{base_url}function={function}&symbol={symbol}&apikey={api_key}&outputsize=compact"
+    url = f"{base_url}function={function}&symbol={symbol}&apikey={API_KEY}&outputsize=compact"
 
     response = requests.get(url)
     data = response.json()
@@ -104,8 +104,9 @@ st.markdown('<h2 class="sub-header">Cutting-Edge Portfolio Optimization</h2>', u
 
 st.markdown('''
 ## About us:
-We are a small-scale portfolio optimization company that uses tools such as Deep Neural Networks
-in combination with Geometric Brownian Motion and Monte Carlo Simulations to ensure that our customers receive the highest return value within the specified risk parameters.
+We are a specialized portfolio optimization firm leveraging advanced tools,
+including Deep Neural Networks, Geometric Brownian Motion, and Monte Carlo Simulations,
+to deliver maximum returns for our clients while adhering to their defined risk parameters.
 ''')
 
 st.markdown('''
@@ -131,12 +132,15 @@ if click:
     weights, technical_data = get_portfolio_data(params=params)
     st.markdown("### Portfolio Weight Distribution")
     plt.figure(figsize=(10, 6))
-    plt.bar(weights.keys(), weights.values(), color='#ff6f61')
-    plt.xlabel("Stocks")
-    plt.ylabel("Weight")
-    plt.title("Portfolio Weight Distribution")
-    plt.grid(True, color='gray')
-    st.pyplot(plt)
+    bars = plt.bar(weights.keys(), weights.values(), color='#d62728', edgecolor='white')
+    plt.xlabel("Stocks", fontsize=12, fontweight='bold')
+    plt.ylabel("Weight", fontsize=12, fontweight='bold')
+    plt.title("Portfolio Weight Distribution", fontsize=16, fontweight='bold')
+    plt.grid(True, color='gray', linestyle='--', linewidth=0.5)
+    plt.gca().spines['top'].set_visible(False)
+    plt.gca().spines['right'].set_visible(False)
+    plt.tight_layout()
+    plt.show()
 
 
 
