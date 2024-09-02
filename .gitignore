@@ -1,0 +1,11 @@
+raw_data/
+Untitled.ipynb
+Untitled5.ipynb
+Windows.ipynb
+.env
+.envrc
+scaling.py
+.DS_Store
+.ipynb_checkpoints/
+.python-version
+__pycache__/
