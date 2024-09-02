@@ -4,9 +4,13 @@ import matplotlib.pyplot as plt
 import requests
 import base64
 
-
 api_key = 'change_when_presenting'
 
+
+def get_portfolio_data(params):
+    api_url = "" # TO BE ADDED WHEN THE FINAL API IS DONE!
+    weights, technical_data = requests.get(api_url).json()
+    return weights, technical_data
 
 def fetch_stock_data(symbol):
     base_url = 'https://www.alphavantage.co/query?'
@@ -34,56 +38,82 @@ def fetch_stock_data(symbol):
         st.error(f"Error fetching data for {symbol}. Please check the symbol and try again.")
         return pd.DataFrame()
 
-
 image_path = "images/portfolio_logo.jpeg"
 with open(image_path, "rb") as image_file:
     encoded_image = base64.b64encode(image_file.read()).decode()
 
+st.set_page_config(layout="wide", page_title="JPMST Capital")
 
 st.markdown("""
     <style>
-    .corner-logo {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        width: 200px;  /* Increased the size of the logo */
-        z-index: 1;
+    /* Global settings */
+    body {
+        background-color: #0e1117;
+        color: white;
     }
-    .content {
-        margin-top: 120px;  /* Adjust margin to avoid overlap with the larger logo */
+
+    /* Sidebar styling */
+    .sidebar .sidebar-content {
+        background-color: #1f232a;
+        color: white;
     }
+
+    /* Widget labels */
+    .sidebar .sidebar-content .element-container {
+        color: white;
+    }
+
+    /* Headers and text */
+    h1, h2, h3, h4, h5, h6, p, div, label {
+        color: white;
+    }
+
+    /* Input elements */
+    .stTextInput, .stNumberInput, .stSelectbox, .stMultiselect {
+        background-color: #262c3a;
+        color: white;
+    }
+
+    /* Button styling */
+    button {
+        background-color: #ff4b4b;
+        color: white;
+    }
+
+    /* Adjusting margin for headers */
+    .sub-header {
+        color: #ff6f61;
+        margin-top: 20px;
+    }
+
     </style>
     """, unsafe_allow_html=True)
 
 
 st.markdown(f"""
-    <div class="corner-logo">
-        <img src="data:image/jpeg;base64,{encoded_image}" width="200">  <!-- Adjust the width here as well -->
+    <div style='text-align: center;'>
+        <img src="data:image/jpeg;base64,{encoded_image}" width="400"> <!-- Adjusted width to 400px -->
     </div>
     """, unsafe_allow_html=True)
-
 
 st.markdown('''
 # Welcome to JPMST Capital!
 ''')
-
 
 st.markdown('<h2 class="sub-header">Cutting-Edge Portfolio Optimization</h2>', unsafe_allow_html=True)
 
 st.markdown('''
 ## About us:
 We are a small-scale portfolio optimization company that uses tools such as Deep Neural Networks
-in combination with Geometric Brownian Motion and Monta Carlo Simulations to ensure that our customers receive the highest return value within the specified risk parameters.
+in combination with Geometric Brownian Motion and Monte Carlo Simulations to ensure that our customers receive the highest return value within the specified risk parameters.
 ''')
 
 st.markdown('''
-            ## How does it work?
-            Our services deliver optimized stock weight recommendations based on advanced predictions and simulations.
-            These allocations are updated periodically as new data becomes available.
-            By selecting "Get Optimized Weights," you will gain access to a histogram displaying our suggested portfolio distribution, along with a graph illustrating the projected performance of your portfolio.
-
-
-            ''')
+## How does it work?
+Our services deliver optimized stock weight recommendations based on advanced predictions and simulations.
+These allocations are updated periodically as new data becomes available.
+By selecting "Get Optimized Weights," you will gain access to a histogram displaying our suggested portfolio distribution, along with a graph illustrating the projected performance of your portfolio.
+''')
 
 available_stocks = ['AAPL', 'XOM', 'MSFT', 'NEE', 'AMT', 'CAT', 'PG', 'JNJ', 'MCD', 'GS']
 st.sidebar.header("Your desired parameters for a portfolio")
@@ -92,21 +122,32 @@ risk = st.sidebar.slider(label="What would be the desired risk?", min_value=0.01
 desired_stocks = st.sidebar.multiselect("Please select the desired stocks you would like to invest your capital in...", available_stocks, default=None)
 
 url_optimize = ""
-
-params = {"risk": risk, "investment_amount": invest_amount}
+params = {"risk": risk, "investment_amount": invest_amount, "desired_stocks": desired_stocks}
 
 click = st.button(label="Get optimized weights!")
 
-# if click:
-st.sidebar.markdown("If you're uncertain about which stocks to invest in, you can visualize the closing price trends over time below.")
 
+if click:
+    weights, technical_data = get_portfolio_data(params=params)
+    st.markdown("### Portfolio Weight Distribution")
+    plt.figure(figsize=(10, 6))
+    plt.bar(weights.keys(), weights.values(), color='#ff6f61')
+    plt.xlabel("Stocks")
+    plt.ylabel("Weight")
+    plt.title("Portfolio Weight Distribution")
+    plt.grid(True, color='gray')
+    st.pyplot(plt)
+
+
+
+st.sidebar.markdown("If you're uncertain about which stocks to invest in, you can visualize the closing price trends over time below.")
 selected_stocks = st.sidebar.multiselect("Select stocks to plot", available_stocks, default=['AAPL'])
 
 plot_placeholder = st.sidebar.empty()
 
-
 if selected_stocks:
     with plot_placeholder.container():
+        plt.style.use('dark_background')
         plt.figure(figsize=(6, 4))
 
         for stock in selected_stocks:
@@ -114,11 +155,11 @@ if selected_stocks:
             if not stock_df.empty:
                 plt.plot(stock_df.index, stock_df['close'], label=stock)
 
-        plt.title("Stock Closing Prices Over Time")
-        plt.xlabel("Date")
-        plt.ylabel("Price")
+        plt.title("Stock Closing Prices Over Time", color='white')
+        plt.xlabel("Date", color='white')
+        plt.ylabel("Price", color='white')
         plt.legend(loc="upper left")
-        plt.grid(True)
+        plt.grid(True, color='gray')
         st.pyplot(plt)
 else:
     plot_placeholder.write("Please select at least one stock to plot.")
