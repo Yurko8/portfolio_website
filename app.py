@@ -5,7 +5,7 @@ import requests
 import base64
 
 
-api_key = '0IWDNSUHW5E2KC76'
+api_key = 'change_when_presenting'
 
 
 def fetch_stock_data(symbol):
