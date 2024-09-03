@@ -9,7 +9,7 @@ API_KEY = os.getenv("API_KEY")
 
 def get_portfolio_data(params):
     api_url = "" # TO BE ADDED WHEN THE FINAL API IS DONE!
-    weights, technical_data = requests.get(api_url).json()
+    weights, technical_data = requests.get(api_url, params=params).json()
     return weights, technical_data
 
 def fetch_stock_data(symbol):
@@ -130,6 +130,10 @@ click = st.button(label="Get optimized weights!")
 
 if click:
     weights, technical_data = get_portfolio_data(params=params)
+    volatility = technical_data['volatility']
+    expected_return = technical_data['expected_return']
+    sharpe_ratio = technical_data['sharpe_ratio']
+
     st.markdown("### Portfolio Weight Distribution")
     plt.figure(figsize=(10, 6))
     bars = plt.bar(weights.keys(), weights.values(), color='#d62728', edgecolor='white')
@@ -141,6 +145,12 @@ if click:
     plt.gca().spines['right'].set_visible(False)
     plt.tight_layout()
     plt.show()
+
+    st.markdown("### Portfolio Performance Metrics")
+    
+    st.write(f"**Volatility:** {volatility:.2f}")
+    st.write(f"**Expected Return:** {expected_return:.2f}")
+    st.write(f"**Sharpe Ratio:** {sharpe_ratio:.2f}")
 
 
 
