@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import requests
 import base64
 import os
+from collections import defaultdict
 
 API_KEY = os.getenv("API_KEY")
 
@@ -114,35 +116,68 @@ By selecting "Get Optimized Weights," you will gain access to a histogram displa
 available_stocks = ['AAPL', 'XOM', 'MSFT', 'NEE', 'AMT', 'CAT', 'PG', 'JNJ', 'MCD', 'GS']
 st.sidebar.header("Your desired parameters for a portfolio")
 invest_amount = st.sidebar.number_input(label="Please choose the amount you would like to invest:", min_value=100, max_value=1000000, step=100, value=1000)
-# risk = st.sidebar.slider(label="What would be the desired risk?", min_value=0.01, max_value=0.15, step=0.01)
+n_simulations = st.sidebar.number_input(label="Please choose the number of simulations you would like to run, each simulation corresponds to 30 minute intervals", min_value=10, max_value=5000, step=10, value=10)
 desired_stocks = st.sidebar.multiselect("Please select the desired stocks you would like to invest your capital in...", available_stocks, default=None)
 
-params = {"desired_stocks": desired_stocks}
 
-
-def fetch_portfolio_data(assets_list):
-    api_url = "https://portfoliomanager-96271241201.europe-west1.run.app/portfolio"
-    stocks_param = str(assets_list)
-    full_url = f"{api_url}?stocks={stocks_param}"
-    response = requests.get(full_url)
+def fetch_data(stocks, n_simulations):
+    stocks_param = str(stocks)
+    api_url = f"https://portfolio-manager-96271241201.europe-west1.run.app/portfolio?stocks={stocks_param}&n_simulations={n_simulations}"
+    response = requests.get(api_url)
     data = response.json()
-    return data
+    returns = data[0]
+    vol = data[1]
+    sharpe = data[2]
+    weights = data[3]
+    return returns, vol, sharpe, weights
 
 click = st.button(label="Get optimized weights!")
 
 if click:
-    portfolio_data = fetch_portfolio_data(desired_stocks)
-    weights = portfolio_data.get('weights', {})
-    performance = portfolio_data.get('performance', {})
-    expected_return = performance.get('expected_return', 0.0)
-    volatility = performance.get('volatility', 0.0)
-    sharpe_ratio = performance.get('sharpe_ratio', 0.0)
-    expected_profit = invest_amount * expected_return
 
-    st.markdown("### Portfolio Weight Distribution")
-    if weights:
+    with st.spinner('Fetching and processing data...'):
+
+
+        returns, vol, sharpe, weights = fetch_data(desired_stocks, n_simulations)
+
+
+        average_return = np.mean(returns)
+        expected_profit = invest_amount * average_return
+        average_volatility = np.mean(vol)
+
+
+        st.markdown("### Portfolio Performance")
+
+
+        number_of_simulations = list(range(1, len(returns) + 1))
+        annualized_returns = returns
+
         plt.figure(figsize=(10, 6))
-        bars = plt.bar(weights.keys(), weights.values(), color='#d62728', edgecolor='white')
+        plt.plot(number_of_simulations, annualized_returns, marker='o', linestyle='-', color='#1f77b4', linewidth=2)
+        plt.title('Annualized Returns vs Number of Simulations', fontsize=14, weight='bold')
+        plt.xlabel('Number of Simulations', fontsize=12)
+        plt.ylabel('Annualized Returns (%)', fontsize=12)
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
+        plt.gca().spines['top'].set_visible(False)
+        plt.gca().spines['right'].set_visible(False)
+        plt.tight_layout()
+        st.pyplot(plt)
+        plt.close()
+
+
+        sum_dict = defaultdict(float)
+        num_dicts = len(weights)
+        for d in weights:
+            for key, value in d.items():
+                sum_dict[key] += value
+        mean_dict = {key: sum_val / num_dicts for key, sum_val in sum_dict.items()}
+
+        st.markdown("### Average Portfolio Weight Distribution")
+
+        plt.figure(figsize=(10, 6))
+        bars = plt.bar(mean_dict.keys(), mean_dict.values(), color='#d62728', edgecolor='white')
         plt.xlabel("Stocks", fontsize=12, fontweight='bold')
         plt.ylabel("Weight", fontsize=12, fontweight='bold')
         plt.title("Portfolio Weight Distribution", fontsize=16, fontweight='bold')
@@ -153,12 +188,25 @@ if click:
         st.pyplot(plt)
         plt.close()
 
-    st.markdown("### Portfolio Performance Metrics")
-    st.write(f"**Volatility:** {volatility}")
-    st.write(f"**Expected Return:** {expected_return}")
-    st.write(f"**Sharpe Ratio:** {sharpe_ratio}")
-    st.markdown("### Investment Return")
-    st.write(f"If you invest {invest_amount:,.2f}, you are expected to make {expected_profit:,.2f} based on the expected return.")
+
+        st.markdown("### Portfolio Performance Metrics")
+        st.write(f"**Average Volatility:** {average_volatility:,.2f}%")
+        st.write(f"**Average Return:** {average_return:,.2f}%")
+
+
+        st.markdown("### Investment Return")
+        st.write(f"If you invest {invest_amount:,.2f} Dollars, you are expected to make {expected_profit:,.2f} Dollars based on the expected return.")
+
+        sp_500 = 0.2034
+        difference = sp_500 - average_return
+        st.markdown("### Benchmark Comparison")
+        if difference > 0:
+            st.write(f"Your return is {difference}$ higher than S&P 500")
+        else:
+            st.write(f"Your return is {difference}$ lower than S&P 500")
+
+    st.success('Data processing complete!')
+
 
 
 st.sidebar.markdown("If you're uncertain about which stocks to invest in, you can visualize the closing price trends over time below.")
