@@ -140,11 +140,10 @@ if click:
 
         returns, vol, sharpe, weights = fetch_data(desired_stocks, n_simulations)
 
-
+        average_return_profit = np.mean(returns)
         average_return = np.mean(returns)*100
-        expected_profit = invest_amount * average_return
+        expected_profit = invest_amount * average_return_profit
         average_volatility = np.mean(vol)*100
-
 
         st.markdown("### Portfolio Performance")
 
