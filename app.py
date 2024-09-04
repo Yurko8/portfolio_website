@@ -141,9 +141,9 @@ if click:
         returns, vol, sharpe, weights = fetch_data(desired_stocks, n_simulations)
 
 
-        average_return = np.mean(returns)
+        average_return = np.mean(returns)*100
         expected_profit = invest_amount * average_return
-        average_volatility = np.mean(vol)
+        average_volatility = np.mean(vol)*100
 
 
         st.markdown("### Portfolio Performance")
@@ -166,6 +166,23 @@ if click:
         st.pyplot(plt)
         plt.close()
 
+        st.markdown("### Portfolio Value")
+
+        returns_monthly = (np.array(returns)/5040)+1
+        return_investment = invest_amount*np.cumprod(returns_monthly)
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(number_of_simulations, return_investment, label='Portfolio Value', linewidth=2)
+        ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+        ax.set_title("Portfolio Value Over Time", fontsize=16, fontweight='bold')
+        ax.set_xlabel("Time Period (Number of Simulations)", fontsize=12)
+        ax.set_ylabel("Portfolio Value", fontsize=12)
+        ax.legend()
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_linewidth(1.5)
+        ax.spines['bottom'].set_linewidth(1.5)
+        ax.tick_params(axis='both', which='major', labelsize=10)
+        st.pyplot(fig)
 
         sum_dict = defaultdict(float)
         num_dicts = len(weights)
@@ -197,13 +214,13 @@ if click:
         st.markdown("### Investment Return")
         st.write(f"If you invest {invest_amount:,.2f} Dollars, you are expected to make {expected_profit:,.2f} Dollars based on the expected return.")
 
-        sp_500 = 0.2034
+        sp_500 = 20.34
         difference = sp_500 - average_return
         st.markdown("### Benchmark Comparison")
         if difference > 0:
-            st.write(f"Your return is {difference} higher than S&P 500")
+            st.write(f"Your return is {difference}% higher than S&P 500")
         else:
-            st.write(f"Your return is {difference} lower than S&P 500")
+            st.write(f"Your return is {difference}% lower than S&P 500")
 
     st.success('Data processing complete!')
 
