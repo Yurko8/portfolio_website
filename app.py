@@ -201,9 +201,9 @@ if click:
         difference = sp_500 - average_return
         st.markdown("### Benchmark Comparison")
         if difference > 0:
-            st.write(f"Your return is {difference}$ higher than S&P 500")
+            st.write(f"Your return is {difference} higher than S&P 500")
         else:
-            st.write(f"Your return is {difference}$ lower than S&P 500")
+            st.write(f"Your return is {difference} lower than S&P 500")
 
     st.success('Data processing complete!')
 
