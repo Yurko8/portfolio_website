@@ -7,11 +7,6 @@ import os
 
 API_KEY = os.getenv("API_KEY")
 
-def get_portfolio_data(params):
-    api_url = "" # TO BE ADDED WHEN THE FINAL API IS DONE!
-    weights, technical_data = requests.get(api_url, params=params).json()
-    return weights, technical_data
-
 def fetch_stock_data(symbol):
     base_url = 'https://www.alphavantage.co/query?'
     function = 'TIME_SERIES_DAILY_ADJUSTED'
@@ -119,39 +114,51 @@ By selecting "Get Optimized Weights," you will gain access to a histogram displa
 available_stocks = ['AAPL', 'XOM', 'MSFT', 'NEE', 'AMT', 'CAT', 'PG', 'JNJ', 'MCD', 'GS']
 st.sidebar.header("Your desired parameters for a portfolio")
 invest_amount = st.sidebar.number_input(label="Please choose the amount you would like to invest:", min_value=100, max_value=1000000, step=100, value=1000)
-risk = st.sidebar.slider(label="What would be the desired risk?", min_value=0.01, max_value=0.15, step=0.01)
+# risk = st.sidebar.slider(label="What would be the desired risk?", min_value=0.01, max_value=0.15, step=0.01)
 desired_stocks = st.sidebar.multiselect("Please select the desired stocks you would like to invest your capital in...", available_stocks, default=None)
 
-url_optimize = ""
-params = {"risk": risk, "investment_amount": invest_amount, "desired_stocks": desired_stocks}
+params = {"desired_stocks": desired_stocks}
+
+
+def fetch_portfolio_data(assets_list):
+    api_url = "https://portfoliomanager-96271241201.europe-west1.run.app/portfolio"
+    stocks_param = str(assets_list)
+    full_url = f"{api_url}?stocks={stocks_param}"
+    response = requests.get(full_url)
+    data = response.json()
+    return data
 
 click = st.button(label="Get optimized weights!")
 
-
 if click:
-    weights, technical_data = get_portfolio_data(params=params)
-    volatility = technical_data['volatility']
-    expected_return = technical_data['expected_return']
-    sharpe_ratio = technical_data['sharpe_ratio']
+    portfolio_data = fetch_portfolio_data(desired_stocks)
+    weights = portfolio_data.get('weights', {})
+    performance = portfolio_data.get('performance', {})
+    expected_return = performance.get('expected_return', 0.0)
+    volatility = performance.get('volatility', 0.0)
+    sharpe_ratio = performance.get('sharpe_ratio', 0.0)
+    expected_profit = invest_amount * expected_return
 
     st.markdown("### Portfolio Weight Distribution")
-    plt.figure(figsize=(10, 6))
-    bars = plt.bar(weights.keys(), weights.values(), color='#d62728', edgecolor='white')
-    plt.xlabel("Stocks", fontsize=12, fontweight='bold')
-    plt.ylabel("Weight", fontsize=12, fontweight='bold')
-    plt.title("Portfolio Weight Distribution", fontsize=16, fontweight='bold')
-    plt.grid(True, color='gray', linestyle='--', linewidth=0.5)
-    plt.gca().spines['top'].set_visible(False)
-    plt.gca().spines['right'].set_visible(False)
-    plt.tight_layout()
-    plt.show()
+    if weights:
+        plt.figure(figsize=(10, 6))
+        bars = plt.bar(weights.keys(), weights.values(), color='#d62728', edgecolor='white')
+        plt.xlabel("Stocks", fontsize=12, fontweight='bold')
+        plt.ylabel("Weight", fontsize=12, fontweight='bold')
+        plt.title("Portfolio Weight Distribution", fontsize=16, fontweight='bold')
+        plt.grid(True, color='gray', linestyle='--', linewidth=0.5)
+        plt.gca().spines['top'].set_visible(False)
+        plt.gca().spines['right'].set_visible(False)
+        plt.tight_layout()
+        st.pyplot(plt)
+        plt.close()
 
     st.markdown("### Portfolio Performance Metrics")
-    
-    st.write(f"**Volatility:** {volatility:.2f}")
-    st.write(f"**Expected Return:** {expected_return:.2f}")
-    st.write(f"**Sharpe Ratio:** {sharpe_ratio:.2f}")
-
+    st.write(f"**Volatility:** {volatility}")
+    st.write(f"**Expected Return:** {expected_return}")
+    st.write(f"**Sharpe Ratio:** {sharpe_ratio}")
+    st.markdown("### Investment Return")
+    st.write(f"If you invest {invest_amount:,.2f}, you are expected to make {expected_profit:,.2f} based on the expected return.")
 
 
 st.sidebar.markdown("If you're uncertain about which stocks to invest in, you can visualize the closing price trends over time below.")
