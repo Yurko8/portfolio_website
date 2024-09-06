@@ -195,7 +195,7 @@ elif page == "Portfolio Optimization":
             st.pyplot(plt)
             plt.close()
 
-          
+
             sp_500_return = 20.34
             st.markdown(f"""
                 <div style="font-size: 26px; line-height: 1.6;">
@@ -209,5 +209,5 @@ elif page == "Portfolio Optimization":
                 """, unsafe_allow_html=True)
 
             st.markdown("### 🎉 **Congratulations on Your Investment!** 🎉", unsafe_allow_html=True)
-            st.markdown(f"<h2 style='color: #4CAF50;'>If you invest <strong>{invest_amount:,.2f}</strong> Dollars, you are expected to make <strong>{expected_profit:,.2f}</strong> Dollars profit! 💸</h2>", unsafe_allow_html=True)
+            st.markdown(f"<h2 style='color: #4CAF50;'>If you invest <strong>{invest_amount:,.2f}</strong> Dollars, you are expected to make an annual profit of <strong>{expected_profit:,.2f}</strong> Dollars! 💸</h2>", unsafe_allow_html=True)
             st.balloons()
